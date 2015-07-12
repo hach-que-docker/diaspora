@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Run Redis
+/usr/sbin/redis-server /etc/redis/default.conf &
+
+# Wait for /var/run/redis/default.pid to appear and copy it.
+while [ ! -e /var/run/redis/default.pid ]; do
+  echo "Waiting for /var/run/redis/default.pid to appear..."
+  sleep 1
+done
+cp /var/run/redis/default.pid /run/watch/redis

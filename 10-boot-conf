@@ -1,0 +1,70 @@
+#!/bin/bash
+
+set -e
+set -x
+
+# Update Diaspora
+pushd /srv/diaspora/diaspora
+su -u diaspora 'cd /srv/diaspora/diaspora && git checkout Gemfile.lock db/schema.rb'
+su -u diaspora 'cd /srv/diaspora/diaspora && git pull'
+su -u diaspora 'source "$HOME/.rvm/scripts/rvm" && cd /srv/diaspora/diaspora && RAILS_ENV=production DB=mysql bin/bundle install --without test development'
+popd
+
+# Run preconfiguration script
+pushd /srv/diaspora/diaspora
+if [ -e /config/script.pre ]; then
+    echo "Applying pre-configuration script..."
+    chgrp diaspora /config/script.pre
+    chmod g+rx /config/script.pre
+    su -u diaspora 'cd /srv/diaspora/diaspora && /config/script.pre'
+fi
+popd
+
+# Copy example files to /config
+echo "Copying example files to /config..."
+cp /srv/diaspora/diaspora/config/database.yml.example /config/database.yml.example
+cp /srv/diaspora/diaspora/config/diaspora.yml.example /config/diaspora.yml.example
+
+MISSING_CONF=""
+if [ ! -e /config/domain_name ]; then
+  MISSING_CONF="${MISSING_CONF}Missing domain name config file at /config/domain_name"
+fi
+
+if [ ! -e /config/database.yml ]; then
+  MISSING_CONF="${MISSING_CONF}Missing database configuration file at /config/database.yml"
+else
+  cp /config/diaspora.yml /srv/diaspora/diaspora/config/database.yml
+  chgrp diaspora /srv/diaspora/diaspora/config/database.yml
+  chmod g+rx /srv/diaspora/diaspora/config/database.yml
+fi
+
+if [ ! -e /config/diaspora.yml ]; then
+  MISSING_CONF="${MISSING_CONF}Missing database configuration file at /config/diaspora.yml"
+else
+  cp /config/diaspora.yml /srv/diaspora/diaspora/config/diaspora.yml
+  chgrp diaspora /srv/diaspora/diaspora/config/diaspora.yml
+  chmod g+rx /srv/diaspora/diaspora/config/diaspora.yml
+fi
+
+if [ "$MISSING_CONF" != "" ]; then
+  echo "+++++ MISSING CONFIGURATION +++++"
+  echo ""
+  echo "You are missing the following configuration "
+  echo "files:"
+  echo ""
+  echo "$MISSING_CONF"
+  echo ""
+  echo "You must specify a configuration settings for "
+  echo "this Docker image.  To do so: "
+  echo ""
+  echo "  1) Create the required files in a directory "
+  echo "     called 'config', somewhere on the host. "
+  echo ""
+  echo "  2) Run this Docker instance again with "
+  echo "     -v path/to/config:/config passed as an "
+  echo "     argument."
+  echo ""
+  echo "+++++ BOOT FAILED! +++++"
+  exit 1
+fi
+

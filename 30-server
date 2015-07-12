@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Run the background server
+cd /srv/diaspora/diaspora
+su diaspora -c "script/server" &
+SERVER_PID=$!
+echo $SERVER_PID > /run/watch/server
+

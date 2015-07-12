@@ -23,8 +23,8 @@ http {
   keepalive_timeout 15;
   client_max_body_size 5m;
 
-  passenger_root /usr/lib64/ruby/gems/2.0.0/gems/passenger-4.0.18;
-  passenger_ruby /usr/bin/ruby;
+  passenger_root /srv/diaspora/.rvm/gems/ruby-2.1.5@diaspora/gems/passenger-5.0.13;
+  passenger_ruby /srv/diaspora/.rvm/gems/ruby-2.1.5@diaspora/wrappers/ruby;
 
   server {
     listen 80;
@@ -79,8 +79,8 @@ http {
   keepalive_timeout 15;
   client_max_body_size 5m;
 
-  passenger_root /usr/lib64/ruby/gems/2.0.0/gems/passenger-4.0.18;
-  passenger_ruby /usr/bin/ruby;
+  passenger_root /srv/diaspora/.rvm/gems/ruby-2.1.5@diaspora/gems/passenger-5.0.13;
+  passenger_ruby /srv/diaspora/.rvm/gems/ruby-2.1.5@diaspora/wrappers/ruby;
 
   upstream thin_cluster {
     server localhost:3000;
@@ -115,14 +115,14 @@ EOF
 fi
 
 # Check syntax
-/usr/sbin/nginx -t
+/srv/diaspora/nginx/sbin/nginx -t -c /etc/nginx/nginx.conf
 if [ $? -ne 0 ]; then
     echo "Nginx syntax check fail"
     exit 1
 fi
 
 # Run Nginx
-/usr/sbin/nginx
+/srv/diaspora/nginx/sbin/nginx -c /etc/nginx/nginx.conf
 
 # Wait for /run/nginx.pid to appear and copy it.
 while [ ! -e /run/nginx.pid ]; do

@@ -33,7 +33,7 @@ fi
 if [ ! -e /config/database.yml ]; then
   MISSING_CONF="${MISSING_CONF}Missing database configuration file at /config/database.yml"
 else
-  cp /config/diaspora.yml /srv/diaspora/diaspora/config/database.yml
+  cp /config/database.yml /srv/diaspora/diaspora/config/database.yml
   chgrp diaspora /srv/diaspora/diaspora/config/database.yml
   chmod g+rx /srv/diaspora/diaspora/config/database.yml
 fi
@@ -68,3 +68,43 @@ if [ "$MISSING_CONF" != "" ]; then
   exit 1
 fi
 
+# Perform database installation or upgrade
+cat >/diaspora_upgrade <<EOF
+set -e
+
+echo "Sourcing RVM..."
+source "\$HOME/.rvm/scripts/rvm"
+
+echo "Changing directory to /srv/diaspora/diaspora..."
+cd /srv/diaspora/diaspora
+
+set +e
+echo "Attempting DB upgrade..."
+RAILS_ENV=production DB=mysql bin/rake db:migrate 2>&1 | tee /srv/diaspora/db_upgrade
+DB_UPGRADE_STATUS=\${PIPESTATUS[0]}
+if [ "\$DB_UPGRADE_STATUS" != "0" ]; then
+  DB_UPGRADE_FAILURE_REASON=\$(cat /srv/diaspora/db_upgrade | awk '/ActiveRecord::NoDatabaseError/')
+  if [ "\$DB_UPGRADE_FAILURE_REASON" != "" ]; then
+    echo "Upgrade failed because the database does not exist.  Installing schema..."
+    set -e
+    RAILS_ENV=production DB=mysql bin/rake db:create db:schema:load 2>&1 | tee /srv/diaspora/db_install
+  else
+    echo "Database upgrade failed for some other reason!"
+    exit 1
+  fi
+else
+  echo "DB upgrade completed successfully."
+  set -e
+fi
+
+echo "Performing static asset compilation..."
+RAILS_ENV=production DB=mysql bin/rake assets:precompile
+exit 0
+EOF
+chmod a+rx /diaspora_upgrade
+su diaspora -c "/diaspora_upgrade"
+EXITCODE=$?
+if [ $EXITCODE -ne 0 ]; then
+  echo "Upgrade Diaspora script exited with non-zero exit code"
+  exit $EXITCODE
+fi

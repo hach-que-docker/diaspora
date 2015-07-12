@@ -5,9 +5,9 @@ set -x
 
 # Update Diaspora
 pushd /srv/diaspora/diaspora
-su -u diaspora 'cd /srv/diaspora/diaspora && git checkout Gemfile.lock db/schema.rb'
-su -u diaspora 'cd /srv/diaspora/diaspora && git pull'
-su -u diaspora 'source "$HOME/.rvm/scripts/rvm" && cd /srv/diaspora/diaspora && RAILS_ENV=production DB=mysql bin/bundle install --without test development'
+su diaspora -c 'cd /srv/diaspora/diaspora && git checkout Gemfile.lock db/schema.rb'
+su diaspora -c 'cd /srv/diaspora/diaspora && git pull'
+su diaspora -c 'source "$HOME/.rvm/scripts/rvm" && cd /srv/diaspora/diaspora && RAILS_ENV=production DB=mysql bin/bundle install --without test development'
 popd
 
 # Run preconfiguration script
@@ -16,7 +16,7 @@ if [ -e /config/script.pre ]; then
     echo "Applying pre-configuration script..."
     chgrp diaspora /config/script.pre
     chmod g+rx /config/script.pre
-    su -u diaspora 'cd /srv/diaspora/diaspora && /config/script.pre'
+    su diaspora -c 'cd /srv/diaspora/diaspora && /config/script.pre'
 fi
 popd
 

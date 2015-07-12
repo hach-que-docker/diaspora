@@ -68,6 +68,7 @@ EOF
 else
   cat >/etc/nginx/nginx.conf <<EOF
 worker_processes 1;
+pid        /run/nginx.pid;
 error_log  /var/log/nginx/error.log;
 events { worker_connections  256; }
 

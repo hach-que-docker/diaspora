@@ -41,6 +41,11 @@ RUN su diaspora -c 'source "$HOME/.rvm/scripts/rvm" && rvm install 2.1.1'
 RUN su diaspora -c 'source "$HOME/.rvm/scripts/rvm" && cd /srv/diaspora/diaspora && gem install bundler'
 RUN su diaspora -c 'source "$HOME/.rvm/scripts/rvm" && cd /srv/diaspora/diaspora && RAILS_ENV=production DB=mysql bin/bundle install --without test development'
 
+# Update base image
+RUN zypper --non-interactive patch || true
+RUN zypper --non-interactive patch || true
+RUN zypper --non-interactive patch
+
 # Expose port 80 and 443
 EXPOSE 80
 EXPOSE 443

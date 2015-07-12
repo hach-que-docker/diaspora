@@ -2,7 +2,7 @@
 
 # Run the background server
 cd /srv/diaspora/diaspora
-su diaspora -c "script/server" &
+su diaspora -c "source \"\$HOME/.rvm/scripts/rvm\" && cd /srv/diaspora/diaspora && DB=mysql script/server" &
 SERVER_PID=$!
 echo $SERVER_PID > /run/watch/server
 
